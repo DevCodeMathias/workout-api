@@ -38,9 +38,7 @@ class WorkoutServiceTest {
 
     @Test
     void createActivityShouldSaveActivityAndReturnResponse() {
-        ActivityRequest request = new ActivityRequest();
-        request.setActivityCode("BICEPS");
-        request.setActivityDescription("Biceps workout");
+        ActivityRequest request = new ActivityRequest("BICEPS", "Biceps workout");
 
         Activity savedActivity = new Activity(
                 "employee-1",
@@ -59,11 +57,11 @@ class WorkoutServiceTest {
 
         ActivityResponse response = workoutService.createActivity("employee-1", request);
 
-        assertEquals("activity-1", response.getId());
-        assertEquals("employee-1", response.getEmployeeId());
-        assertEquals("BICEPS", response.getActivityCode());
-        assertEquals("Biceps workout", response.getActivityDescription());
-        assertEquals(savedActivity.getActivityDateTime(), response.getActivityDateTime());
+        assertEquals("activity-1", response.id());
+        assertEquals("employee-1", response.employeeId());
+        assertEquals("BICEPS", response.activityCode());
+        assertEquals("Biceps workout", response.activityDescription());
+        assertEquals(savedActivity.getActivityDateTime(), response.activityDateTime());
 
         ArgumentCaptor<Activity> activityCaptor = ArgumentCaptor.forClass(Activity.class);
         verify(activityRepository).save(activityCaptor.capture());
@@ -82,10 +80,10 @@ class WorkoutServiceTest {
 
         ActivityResponse response = workoutService.searchActivityById("activity-1");
 
-        assertEquals("activity-1", response.getId());
-        assertEquals("employee-1", response.getEmployeeId());
-        assertEquals("BICEPS", response.getActivityCode());
-        assertEquals("Biceps workout", response.getActivityDescription());
+        assertEquals("activity-1", response.id());
+        assertEquals("employee-1", response.employeeId());
+        assertEquals("BICEPS", response.activityCode());
+        assertEquals("Biceps workout", response.activityDescription());
     }
 
     @Test
@@ -110,10 +108,10 @@ class WorkoutServiceTest {
         List<ActivityResponse> response = workoutService.searchActivityByEmployeeId("employee-1");
 
         assertEquals(2, response.size());
-        assertEquals("activity-1", response.get(0).getId());
-        assertEquals("activity-2", response.get(1).getId());
-        assertEquals("employee-1", response.get(0).getEmployeeId());
-        assertEquals("employee-1", response.get(1).getEmployeeId());
+        assertEquals("activity-1", response.get(0).id());
+        assertEquals("activity-2", response.get(1).id());
+        assertEquals("employee-1", response.get(0).employeeId());
+        assertEquals("employee-1", response.get(1).employeeId());
     }
 
     private Envelope<Activity> createEnvelope(String activityId, String employeeId) {

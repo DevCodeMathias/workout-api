@@ -32,8 +32,8 @@ public class WorkoutService implements IWorkoutService {
         Activity activity = new Activity(
                 employeeId,
                 LocalDateTime.now(),
-                payload.getActivityCode(),
-                payload.getActivityDescription()
+                payload.activityCode(),
+                payload.activityDescription()
         );
 
         Envelope<Activity> savedActivity = activityRepository.save(activity);
