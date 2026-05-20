@@ -8,7 +8,6 @@ import org.springframework.data.mongodb.repository.Query;
 import java.util.List;
 
 public interface SpringDataActivityMongoRepository extends MongoRepository<Envelope<Activity>, String> {
-    //TODO: ADJUSTE
     @Query("{ 'body.employeeId': ?0 }")
     List<Envelope<Activity>> findByEmployeeId(String employeeId);
 }

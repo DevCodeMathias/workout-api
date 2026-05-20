@@ -3,7 +3,7 @@ package com.devBackend.workout_api.Controller;
 import com.devBackend.workout_api.Application.DTOs.ActivityRequest;
 import com.devBackend.workout_api.Application.DTOs.ActivityResponse;
 import com.devBackend.workout_api.Application.Interface.IWorkoutService;
-import com.devBackend.workout_api.Infrastructure.Auth.JwtAuthenticator;
+import com.devBackend.workout_api.Application.Interface.IJwtAuthenticator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +25,7 @@ class WorkoutControllerTest {
     private IWorkoutService workoutService;
 
     @Mock
-    private JwtAuthenticator jwtAuthenticator;
+    private IJwtAuthenticator jwtAuthenticator;
 
     private WorkoutController workoutController;
 
@@ -54,6 +54,21 @@ class WorkoutControllerTest {
         assertEquals(expectedResponse, response);
         verify(jwtAuthenticator).getAuthenticatedEmployeeId(AUTHORIZATION_HEADER);
         verify(workoutService).searchActivityByEmployeeId("employee-1");
+    }
+
+    @Test
+    void searchAllActivitiesShouldAuthenticateRequestAndReturnActivities() {
+        List<ActivityResponse> expectedResponse = List.of(
+                createActivityResponse("activity-1", "employee-1"),
+                createActivityResponse("activity-2", "employee-2")
+        );
+        when(workoutService.searchAllActivities()).thenReturn(expectedResponse);
+
+        List<ActivityResponse> response = workoutController.searchAllActivities(AUTHORIZATION_HEADER);
+
+        assertEquals(expectedResponse, response);
+        verify(jwtAuthenticator).authenticate(AUTHORIZATION_HEADER);
+        verify(workoutService).searchAllActivities();
     }
 
     @Test

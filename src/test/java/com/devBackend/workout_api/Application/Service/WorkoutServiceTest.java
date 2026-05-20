@@ -95,6 +95,22 @@ class WorkoutServiceTest {
     }
 
     @Test
+    void searchAllActivitiesShouldReturnResponses() {
+        when(activityRepository.findAll()).thenReturn(List.of(
+                createEnvelope("activity-1", "employee-1"),
+                createEnvelope("activity-2", "employee-2")
+        ));
+
+        List<ActivityResponse> response = workoutService.searchAllActivities();
+
+        assertEquals(2, response.size());
+        assertEquals("activity-1", response.get(0).id());
+        assertEquals("activity-2", response.get(1).id());
+        assertEquals("employee-1", response.get(0).employeeId());
+        assertEquals("employee-2", response.get(1).employeeId());
+    }
+
+    @Test
     void searchActivityByIdShouldThrowWhenActivityDoesNotExist() {
         when(activityRepository.findById("missing-id")).thenReturn(Optional.empty());
 

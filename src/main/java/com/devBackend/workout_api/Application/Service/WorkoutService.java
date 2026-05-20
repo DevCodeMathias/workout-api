@@ -29,6 +29,15 @@ public class WorkoutService implements IWorkoutService {
 
 
     @Override
+    public List<ActivityResponse> searchAllActivities() {
+        logger.info("Searching all activities");
+        return activityRepository.findAll().stream()
+                .map(this::toActivityResponse)
+                .toList();
+    }
+
+    
+    @Override
     public ActivityResponse createActivity(String employeeId, ActivityRequest payload) {
 
         if (!employeeRepository.existsById(employeeId)) {

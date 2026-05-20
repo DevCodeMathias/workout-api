@@ -12,4 +12,6 @@ public interface ActivityRepository {
     Optional<Envelope<Activity>> findById(String id);
 
     List<Envelope<Activity>> findByEmployeeId(String employeeId);
+
+    List<Envelope<Activity>> findAll();
 }

@@ -3,7 +3,7 @@ package com.devBackend.workout_api.Controller;
 import com.devBackend.workout_api.Application.DTOs.ActivityRequest;
 import com.devBackend.workout_api.Application.DTOs.ActivityResponse;
 import com.devBackend.workout_api.Application.Interface.IWorkoutService;
-import com.devBackend.workout_api.Infrastructure.Auth.JwtAuthenticator;
+import com.devBackend.workout_api.Application.Interface.IJwtAuthenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -17,9 +17,9 @@ public class WorkoutController {
     private static final Logger logger = LoggerFactory.getLogger(WorkoutController.class);
 
     private final IWorkoutService workoutService;
-    private final JwtAuthenticator jwtAuthenticator;
+    private final IJwtAuthenticator jwtAuthenticator;
 
-    public WorkoutController(IWorkoutService workoutService, JwtAuthenticator jwtAuthenticator) {
+    public WorkoutController(IWorkoutService workoutService, IJwtAuthenticator jwtAuthenticator) {
         this.workoutService = workoutService;
         this.jwtAuthenticator = jwtAuthenticator;
     }
@@ -37,6 +37,15 @@ public class WorkoutController {
         String employeeId = jwtAuthenticator.getAuthenticatedEmployeeId(authorizationHeader);
         logger.info("Request received to search activities by employee id: {}", employeeId);
         return workoutService.searchActivityByEmployeeId(employeeId);
+    }
+
+    @GetMapping
+    public List<ActivityResponse> searchAllActivities(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader
+    ) {
+        logger.info("Request received to search all activities");
+        jwtAuthenticator.authenticate(authorizationHeader);
+        return workoutService.searchAllActivities();
     }
 
     @GetMapping("/{id}")

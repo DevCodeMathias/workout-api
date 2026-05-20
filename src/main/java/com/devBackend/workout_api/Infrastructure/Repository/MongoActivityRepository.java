@@ -43,4 +43,12 @@ public class MongoActivityRepository implements ActivityRepository {
         logger.debug("Activity documents found employeeId={} count={}", employeeId, activities.size());
         return activities;
     }
+
+    @Override
+    public List<Envelope<Activity>> findAll() {
+        logger.debug("Finding all activity documents");
+        List<Envelope<Activity>> activities = mongoRepository.findAll();
+        logger.debug("All activity documents found count={}", activities.size());
+        return activities;
+    }
 }
