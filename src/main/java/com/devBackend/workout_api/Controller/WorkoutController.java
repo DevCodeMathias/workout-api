@@ -30,13 +30,12 @@ public class WorkoutController {
         return "running";
     }
 
-    @GetMapping("/employees/{employeeId}")
-    public List<ActivityResponse> searchActivityByEmployeeId(
-            @PathVariable String employeeId,
+    @GetMapping("/me")
+    public List<ActivityResponse> searchAuthenticatedEmployeeActivities(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader
     ) {
+        String employeeId = jwtAuthenticator.getAuthenticatedEmployeeId(authorizationHeader);
         logger.info("Request received to search activities by employee id: {}", employeeId);
-        jwtAuthenticator.authenticateEmployee(authorizationHeader, employeeId);
         return workoutService.searchActivityByEmployeeId(employeeId);
     }
 
@@ -50,14 +49,13 @@ public class WorkoutController {
         return workoutService.searchActivityById(id);
     }
 
-    @PostMapping("/{employeeId}")
+    @PostMapping
     public ActivityResponse createActivity(
-            @PathVariable String employeeId,
             @RequestBody ActivityRequest payload,
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader
     ) {
+        String employeeId = jwtAuthenticator.getAuthenticatedEmployeeId(authorizationHeader);
         logger.info("Request received to create activity for employee id: {}", employeeId);
-        jwtAuthenticator.authenticateEmployee(authorizationHeader, employeeId);
         return workoutService.createActivity(employeeId, payload);
     }
 }

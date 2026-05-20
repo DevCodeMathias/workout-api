@@ -42,17 +42,17 @@ class WorkoutControllerTest {
     }
 
     @Test
-    void searchActivityByEmployeeIdShouldAuthenticateEmployeeAndReturnActivities() {
+    void searchAuthenticatedEmployeeActivitiesShouldGetEmployeeFromJwtAndReturnActivities() {
         List<ActivityResponse> expectedResponse = List.of(createActivityResponse("activity-1", "employee-1"));
+        when(jwtAuthenticator.getAuthenticatedEmployeeId(AUTHORIZATION_HEADER)).thenReturn("employee-1");
         when(workoutService.searchActivityByEmployeeId("employee-1")).thenReturn(expectedResponse);
 
-        List<ActivityResponse> response = workoutController.searchActivityByEmployeeId(
-                "employee-1",
+        List<ActivityResponse> response = workoutController.searchAuthenticatedEmployeeActivities(
                 AUTHORIZATION_HEADER
         );
 
         assertEquals(expectedResponse, response);
-        verify(jwtAuthenticator).authenticateEmployee(AUTHORIZATION_HEADER, "employee-1");
+        verify(jwtAuthenticator).getAuthenticatedEmployeeId(AUTHORIZATION_HEADER);
         verify(workoutService).searchActivityByEmployeeId("employee-1");
     }
 
@@ -72,12 +72,13 @@ class WorkoutControllerTest {
     void createActivityShouldAuthenticateEmployeeAndReturnCreatedActivity() {
         ActivityRequest request = new ActivityRequest("RUN", "Morning run");
         ActivityResponse expectedResponse = createActivityResponse("activity-1", "employee-1");
+        when(jwtAuthenticator.getAuthenticatedEmployeeId(AUTHORIZATION_HEADER)).thenReturn("employee-1");
         when(workoutService.createActivity("employee-1", request)).thenReturn(expectedResponse);
 
-        ActivityResponse response = workoutController.createActivity("employee-1", request, AUTHORIZATION_HEADER);
+        ActivityResponse response = workoutController.createActivity(request, AUTHORIZATION_HEADER);
 
         assertEquals(expectedResponse, response);
-        verify(jwtAuthenticator).authenticateEmployee(AUTHORIZATION_HEADER, "employee-1");
+        verify(jwtAuthenticator).getAuthenticatedEmployeeId(AUTHORIZATION_HEADER);
         verify(workoutService).createActivity("employee-1", request);
     }
 

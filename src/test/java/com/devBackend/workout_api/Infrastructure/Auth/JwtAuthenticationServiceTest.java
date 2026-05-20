@@ -64,6 +64,24 @@ class JwtAuthenticationServiceTest {
     }
 
     @Test
+    void getAuthenticatedEmployeeIdShouldReturnEmployeeIdFromToken() {
+        String token = createToken("{\"employeeId\":\"employee-1\"}");
+
+        String employeeId = jwtAuthenticationService.getAuthenticatedEmployeeId("Bearer " + token);
+
+        assertEquals("employee-1", employeeId);
+    }
+
+    @Test
+    void getAuthenticatedEmployeeIdShouldReturnSubWhenEmployeeIdIsMissing() {
+        String token = createToken("{\"sub\":\"employee-1\"}");
+
+        String employeeId = jwtAuthenticationService.getAuthenticatedEmployeeId("Bearer " + token);
+
+        assertEquals("employee-1", employeeId);
+    }
+
+    @Test
     void authenticateEmployeeShouldThrowWhenTokenEmployeeDoesNotMatchPathEmployee() {
         String token = createToken("{\"employeeId\":\"employee-1\"}");
 

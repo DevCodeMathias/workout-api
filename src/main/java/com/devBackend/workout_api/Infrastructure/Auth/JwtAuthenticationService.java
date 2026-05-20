@@ -27,12 +27,7 @@ public class JwtAuthenticationService implements JwtAuthenticator {
     @Override
     public void authenticateEmployee(String authorizationHeader, String employeeId) {
         logger.debug("Authenticating employee JWT for employee id: {}", employeeId);
-        String payload = parsePayload(extractToken(authorizationHeader));
-        String tokenEmployeeId = extractEmployeeId(payload)
-                .orElseThrow(() -> new AuthenticationException(
-                        "INVALID_TOKEN",
-                        "JWT does not contain an employee identifier"
-                ));
+        String tokenEmployeeId = getAuthenticatedEmployeeId(authorizationHeader);
 
         if (!employeeId.equals(tokenEmployeeId)) {
             logger.warn("JWT employee mismatch requestedEmployeeId={} tokenEmployeeId={}", employeeId, tokenEmployeeId);
@@ -43,6 +38,20 @@ public class JwtAuthenticationService implements JwtAuthenticator {
         }
 
         logger.debug("Employee JWT authenticated for employee id: {}", employeeId);
+    }
+
+    @Override
+    public String getAuthenticatedEmployeeId(String authorizationHeader) {
+        logger.debug("Extracting authenticated employee id from JWT");
+        String payload = parsePayload(extractToken(authorizationHeader));
+        String employeeId = extractEmployeeId(payload)
+                .orElseThrow(() -> new AuthenticationException(
+                        "INVALID_TOKEN",
+                        "JWT does not contain an employee identifier"
+                ));
+
+        logger.debug("Authenticated employee id extracted from JWT");
+        return employeeId;
     }
 
     private String extractToken(String authorizationHeader) {
