@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/v1")
+@RequestMapping("/v1/activities")
 public class WorkoutController {
 
     private final IWorkoutService workoutService;
@@ -22,17 +22,17 @@ public class WorkoutController {
         return "running";
     }
 
-    @GetMapping("/activities/employees/{employeeId}")
+    @GetMapping("/employees/{employeeId}")
     public List<ActivityResponse> searchActivityByEmployeeId(@PathVariable String employeeId) {
         return workoutService.searchActivityByEmployeeId(employeeId);
     }
 
-    @GetMapping("/activities/{id}")
+    @GetMapping("/{id}")
     public ActivityResponse searchActivityById(@PathVariable String id) {
         return workoutService.searchActivityById(id);
     }
 
-    @PostMapping("/activities/{employeeId}")
+    @PostMapping("/{employeeId}")
     public ActivityResponse createActivity(@PathVariable String employeeId, @RequestBody ActivityRequest payload) {
         return workoutService.createActivity(employeeId, payload);
     }

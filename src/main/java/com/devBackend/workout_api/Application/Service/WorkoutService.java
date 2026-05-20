@@ -5,7 +5,9 @@ import com.devBackend.workout_api.Application.DTOs.ActivityResponse;
 import com.devBackend.workout_api.Application.Interface.IWorkoutService;
 import com.devBackend.workout_api.Domain.Entity.Activity;
 import com.devBackend.workout_api.Domain.Exception.ActivityNotFoundException;
+import com.devBackend.workout_api.Domain.Exception.EmployeeNotFoundException;
 import com.devBackend.workout_api.Domain.Repository.ActivityRepository;
+import com.devBackend.workout_api.Domain.Repository.EmployeeRepository;
 import com.devBackend.workout_api.Infrastructure.Model.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,14 +20,20 @@ import java.util.List;
 public class WorkoutService implements IWorkoutService {
     private static final Logger logger = LoggerFactory.getLogger(WorkoutService.class);
     private final ActivityRepository activityRepository;
+    private final EmployeeRepository employeeRepository;
 
-    public WorkoutService(ActivityRepository activityRepository) {
+    public WorkoutService(ActivityRepository activityRepository, EmployeeRepository employeeRepository) {
         this.activityRepository = activityRepository;
+        this.employeeRepository = employeeRepository;
     }
 
 
     @Override
     public ActivityResponse createActivity(String employeeId, ActivityRequest payload) {
+
+        if (!employeeRepository.existsById(employeeId)) {
+            throw new EmployeeNotFoundException(employeeId);
+        }
 
         logger.info("Saving activity for employee id: {}", employeeId);
 
@@ -43,6 +51,10 @@ public class WorkoutService implements IWorkoutService {
     @Override
     public List<ActivityResponse> searchActivityByEmployeeId(String employeeId) {
         logger.info("Searching activities by employee id: {}", employeeId);
+        if (!employeeRepository.existsById(employeeId)) {
+            throw new EmployeeNotFoundException(employeeId);
+        }
+
         List<Envelope<Activity>> activities = activityRepository.findByEmployeeId(employeeId);
 
         return activities.stream()
