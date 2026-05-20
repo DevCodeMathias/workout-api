@@ -26,17 +26,17 @@ class JwtAuthenticationServiceTest {
                 () -> jwtAuthenticationService.authenticate(null)
         );
 
-        assertEquals("AUTHORIZATION_HEADER_REQUIRED", exception.getCode());
+        assertEquals("INVALID_TOKEN", exception.getCode());
     }
 
     @Test
-    void authenticateShouldThrowWhenAuthorizationHeaderIsNotBearer() {
+    void authenticateShouldThrowWhenAuthorizationHeaderIsNotJwt() {
         AuthenticationException exception = assertThrows(
                 AuthenticationException.class,
                 () -> jwtAuthenticationService.authenticate("Token abc")
         );
 
-        assertEquals("INVALID_AUTHORIZATION_HEADER", exception.getCode());
+        assertEquals("INVALID_TOKEN", exception.getCode());
     }
 
     @Test
@@ -73,12 +73,16 @@ class JwtAuthenticationServiceTest {
     }
 
     @Test
-    void getAuthenticatedEmployeeIdShouldReturnSubWhenEmployeeIdIsMissing() {
+    void getAuthenticatedEmployeeIdShouldThrowWhenEmployeeIdIsMissing() {
         String token = createToken("{\"sub\":\"employee-1\"}");
 
-        String employeeId = jwtAuthenticationService.getAuthenticatedEmployeeId("Bearer " + token);
+        AuthenticationException exception = assertThrows(
+                AuthenticationException.class,
+                () -> jwtAuthenticationService.getAuthenticatedEmployeeId("Bearer " + token)
+        );
 
-        assertEquals("employee-1", employeeId);
+        assertEquals("INVALID_TOKEN", exception.getCode());
+        assertEquals("JWT does not contain employeeId", exception.getMessage());
     }
 
     @Test
