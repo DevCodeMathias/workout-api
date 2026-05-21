@@ -102,6 +102,50 @@ Payload esperado:
 
 Depois que o filtro valida o token, o controller recebe o employee autenticado via `@AuthenticationPrincipal`.
 
+## Arquitetura
+
+O projeto segue uma separacao em camadas para manter regra de negocio, infraestrutura e entrada HTTP com responsabilidades claras.
+
+```text
+Controller
+  recebe as requisicoes HTTP e repassa os dados para a camada de aplicacao
+
+Application
+  concentra DTOs, interfaces e services com regras de uso da API
+
+Domain
+  contem entidades, contratos de repositorio e exceptions de negocio
+
+Infrastructure
+  implementa acesso ao MongoDB, seguranca JWT e tratamento global de erros
+```
+
+Fluxo principal de uma requisicao protegida:
+
+```text
+Request HTTP
+  -> JwtAuthenticationFilter
+  -> JwtAuthentication
+  -> SecurityContext
+  -> WorkoutController
+  -> WorkoutService
+  -> Repositories
+  -> MongoDB
+```
+
+Responsabilidades principais:
+
+| Camada | Responsabilidade |
+| --- | --- |
+| `Controller` | Expoe as rotas REST e recebe o `employeeId` autenticado via `@AuthenticationPrincipal` |
+| `Application/Service` | Executa os casos de uso e valida se o employee autenticado existe no banco |
+| `Domain` | Define entidades, contratos e exceptions da regra da aplicacao |
+| `Infrastructure/Security` | Valida JWT, configura Spring Security e popula o contexto autenticado |
+| `Infrastructure/Repository` | Implementa os repositorios usando MongoDB |
+| `Infrastructure/Exception` | Padroniza as respostas de erro da API |
+
+Na autenticacao, o controller nao decodifica JWT. O filtro valida o token antes da requisicao chegar no controller. Se o token for valido, o `employeeId` vira o principal autenticado do Spring Security.
+
 ## Rotas
 
 ### Criar atividade
