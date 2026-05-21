@@ -22,8 +22,8 @@ spring.application.name=workout-api
 spring.data.mongodb.uri=${MONGO_URI}
 mongodb.collections.activities=${MONGODB_ACTIVITY_COLLECTION}
 mongodb.collections.employees=${MONGODB_EMPLOYEES_COLLECTION}
-jwt.secret=${JWT_SECRET}
-jwt.expiration-hours=2
+security.jwt.secret=${JWT_SECRET}
+security.jwt.expiration-hours=2
 ```
 
 Variaveis obrigatorias:
@@ -101,6 +101,8 @@ O token precisa conter a claim `employeeId`:
 }
 ```
 
+O token tambem precisa estar assinado com o mesmo `security.jwt.secret` configurado na aplicacao e nao pode estar expirado.
+
 ## Exemplos de Uso
 
 ### Criar atividade
@@ -168,6 +170,24 @@ Exemplo com `curl`:
 curl "http://localhost:8080/v1/activities/me" \
   -H "Authorization: Bearer <seu-token-jwt>"
 ```
+
+### Listar atividades de um employee pelo path
+
+Essa rota compara o `employeeId` do path com o `employeeId` validado do JWT.
+
+```http
+GET http://localhost:8080/v1/activities/employees/{employeeId}
+Authorization: Bearer <seu-token-jwt>
+```
+
+Exemplo com `curl`:
+
+```bash
+curl "http://localhost:8080/v1/activities/employees/6a0dc4717b55af25df34b38c" \
+  -H "Authorization: Bearer <seu-token-jwt>"
+```
+
+Se o id do path for diferente do id do token, a API retorna `TOKEN_EMPLOYEE_MISMATCH`.
 
 ### Listar todas as atividades
 

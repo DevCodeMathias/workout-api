@@ -2,41 +2,33 @@ package com.devBackend.workout_api.Infrastructure.Security;
 
 import com.devBackend.workout_api.Application.Interface.IJwtAuthenticator;
 import com.devBackend.workout_api.Domain.Exception.AuthenticationException;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service
 public class JwtAuthentication implements IJwtAuthenticator {
 
     private static final String BEARER_PREFIX = "Bearer ";
+    private static final String EMPLOYEE_ID_CLAIM = "employeeId";
 
-    @Override
-    public void authenticate(String authorizationHeader) {
-        getPayload(authorizationHeader);
-    }
+    private final SecretKey secretKey;
 
-    @Override
-    public void authenticateEmployee(String authorizationHeader, String employeeId) {
-        String tokenEmployeeId = getAuthenticatedEmployeeId(authorizationHeader);
-
-        if (!employeeId.equals(tokenEmployeeId)) {
-            throw new AuthenticationException(
-                    "TOKEN_EMPLOYEE_MISMATCH",
-                    "JWT employee does not match requested employee"
-            );
-        }
+    public JwtAuthentication(JwtProperties jwtProperties) {
+        this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
     public String getAuthenticatedEmployeeId(String authorizationHeader) {
-        String payload = getPayload(authorizationHeader);
-        String employeeId = findClaim(payload, "employeeId");
+        Claims claims = getClaims(authorizationHeader);
+        String employeeId = claims.get(EMPLOYEE_ID_CLAIM, String.class);
 
-        if (employeeId == null) {
+        if (employeeId == null || employeeId.isBlank()) {
             throw new AuthenticationException(
                     "INVALID_TOKEN",
                     "JWT does not contain employeeId"
@@ -46,15 +38,16 @@ public class JwtAuthentication implements IJwtAuthenticator {
         return employeeId;
     }
 
-    private String getPayload(String authorizationHeader) {
+    private Claims getClaims(String authorizationHeader) {
+        String token = extractToken(authorizationHeader);
+
         try {
-            String token = authorizationHeader.replace(BEARER_PREFIX, "");
-            String payload = token.split("\\.")[1];
-
-            byte[] decodedPayload = Base64.getUrlDecoder().decode(payload);
-
-            return new String(decodedPayload, StandardCharsets.UTF_8);
-        } catch (Exception exception) {
+            return Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (JwtException | IllegalArgumentException exception) {
             throw new AuthenticationException(
                     "INVALID_TOKEN",
                     "JWT is invalid"
@@ -62,10 +55,23 @@ public class JwtAuthentication implements IJwtAuthenticator {
         }
     }
 
-    private String findClaim(String payload, String claimName) {
-        Pattern pattern = Pattern.compile("\"" + claimName + "\"\\s*:\\s*\"([^\"]+)\"");
-        Matcher matcher = pattern.matcher(payload);
+    private String extractToken(String authorizationHeader) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)) {
+            throw new AuthenticationException(
+                    "INVALID_TOKEN",
+                    "JWT is invalid"
+            );
+        }
 
-        return matcher.find() ? matcher.group(1) : null;
+        String token = authorizationHeader.substring(BEARER_PREFIX.length());
+
+        if (token.isBlank()) {
+            throw new AuthenticationException(
+                    "INVALID_TOKEN",
+                    "JWT is invalid"
+            );
+        }
+
+        return token;
     }
 }

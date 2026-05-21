@@ -84,9 +84,10 @@ class WorkoutServiceTest {
     @Test
     void searchActivityByIdShouldReturnResponseWhenActivityExists() {
         Envelope<Activity> envelope = createEnvelope("activity-1", "employee-1");
+        when(employeeRepository.existsById("employee-1")).thenReturn(true);
         when(activityRepository.findById("activity-1")).thenReturn(Optional.of(envelope));
 
-        ActivityResponse response = workoutService.searchActivityById("activity-1");
+        ActivityResponse response = workoutService.searchActivityById("activity-1", "employee-1");
 
         assertEquals("activity-1", response.id());
         assertEquals("employee-1", response.employeeId());
@@ -96,12 +97,13 @@ class WorkoutServiceTest {
 
     @Test
     void searchAllActivitiesShouldReturnResponses() {
+        when(employeeRepository.existsById("employee-1")).thenReturn(true);
         when(activityRepository.findAll()).thenReturn(List.of(
                 createEnvelope("activity-1", "employee-1"),
                 createEnvelope("activity-2", "employee-2")
         ));
 
-        List<ActivityResponse> response = workoutService.searchAllActivities();
+        List<ActivityResponse> response = workoutService.searchAllActivities("employee-1");
 
         assertEquals(2, response.size());
         assertEquals("activity-1", response.get(0).id());
@@ -112,11 +114,12 @@ class WorkoutServiceTest {
 
     @Test
     void searchActivityByIdShouldThrowWhenActivityDoesNotExist() {
+        when(employeeRepository.existsById("employee-1")).thenReturn(true);
         when(activityRepository.findById("missing-id")).thenReturn(Optional.empty());
 
         ActivityNotFoundException exception = assertThrows(
                 ActivityNotFoundException.class,
-                () -> workoutService.searchActivityById("missing-id")
+                () -> workoutService.searchActivityById("missing-id", "employee-1")
         );
 
         assertEquals("Activity not found with id: missing-id", exception.getMessage());
@@ -153,6 +156,36 @@ class WorkoutServiceTest {
         assertEquals("Employee not found with id: missing-employee", exception.getMessage());
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
         assertEquals("EMPLOYEE_NOT_FOUND", exception.getCode());
+    }
+
+    @Test
+    void searchAllActivitiesShouldThrowWhenAuthenticatedEmployeeDoesNotExist() {
+        when(employeeRepository.existsById("missing-employee")).thenReturn(false);
+
+        EmployeeNotFoundException exception = assertThrows(
+                EmployeeNotFoundException.class,
+                () -> workoutService.searchAllActivities("missing-employee")
+        );
+
+        assertEquals("Employee not found with id: missing-employee", exception.getMessage());
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+        assertEquals("EMPLOYEE_NOT_FOUND", exception.getCode());
+        verify(activityRepository, never()).findAll();
+    }
+
+    @Test
+    void searchActivityByIdShouldThrowWhenAuthenticatedEmployeeDoesNotExist() {
+        when(employeeRepository.existsById("missing-employee")).thenReturn(false);
+
+        EmployeeNotFoundException exception = assertThrows(
+                EmployeeNotFoundException.class,
+                () -> workoutService.searchActivityById("activity-1", "missing-employee")
+        );
+
+        assertEquals("Employee not found with id: missing-employee", exception.getMessage());
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+        assertEquals("EMPLOYEE_NOT_FOUND", exception.getCode());
+        verify(activityRepository, never()).findById("activity-1");
     }
 
     @Test

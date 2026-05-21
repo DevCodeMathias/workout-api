@@ -1,71 +1,99 @@
 package com.devBackend.workout_api.Infrastructure.Security;
 
 import com.devBackend.workout_api.Domain.Exception.AuthenticationException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import java.time.Instant;
+import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class JwtAuthenticationServiceTest {
+    private static final String SECRET = "test-secret-key-with-at-least-32-characters";
+    private static final String OTHER_SECRET = "other-secret-key-with-at-least-32-characters";
+
     private JwtAuthentication jwtAuthenticationService;
 
     @BeforeEach
     void setUp() {
-        jwtAuthenticationService = new JwtAuthentication();
+        JwtProperties jwtProperties = new JwtProperties();
+        jwtProperties.setSecret(SECRET);
+        jwtProperties.setExpirationHours(24);
+
+        jwtAuthenticationService = new JwtAuthentication(jwtProperties);
     }
 
     @Test
-    void authenticateShouldThrowWhenAuthorizationHeaderIsMissing() {
+    void getAuthenticatedEmployeeIdShouldThrowWhenAuthorizationHeaderIsMissing() {
         AuthenticationException exception = assertThrows(
                 AuthenticationException.class,
-                () -> jwtAuthenticationService.authenticate(null)
+                () -> jwtAuthenticationService.getAuthenticatedEmployeeId(null)
         );
 
         assertEquals("INVALID_TOKEN", exception.getCode());
     }
 
     @Test
-    void authenticateShouldThrowWhenAuthorizationHeaderIsNotJwt() {
+    void getAuthenticatedEmployeeIdShouldThrowWhenAuthorizationHeaderDoesNotStartWithBearer() {
         AuthenticationException exception = assertThrows(
                 AuthenticationException.class,
-                () -> jwtAuthenticationService.authenticate("Token abc")
+                () -> jwtAuthenticationService.getAuthenticatedEmployeeId("Token abc")
         );
 
         assertEquals("INVALID_TOKEN", exception.getCode());
     }
 
     @Test
-    void authenticateShouldThrowWhenJwtFormatIsInvalid() {
+    void getAuthenticatedEmployeeIdShouldThrowWhenJwtFormatIsInvalid() {
         AuthenticationException exception = assertThrows(
                 AuthenticationException.class,
-                () -> jwtAuthenticationService.authenticate("Bearer invalid-token")
+                () -> jwtAuthenticationService.getAuthenticatedEmployeeId("Bearer invalid-token")
         );
 
         assertEquals("INVALID_TOKEN", exception.getCode());
     }
 
     @Test
-    void authenticateShouldAcceptValidJwtFormat() {
-        String token = createToken("{\"sub\":\"employee-1\"}");
+    void getAuthenticatedEmployeeIdShouldThrowWhenJwtSignatureIsInvalid() {
+        String token = createToken("employee-1", false, OTHER_SECRET);
 
-        assertDoesNotThrow(() -> jwtAuthenticationService.authenticate("Bearer " + token));
+        AuthenticationException exception = assertThrows(
+                AuthenticationException.class,
+                () -> jwtAuthenticationService.getAuthenticatedEmployeeId("Bearer " + token)
+        );
+
+        assertEquals("INVALID_TOKEN", exception.getCode());
     }
 
     @Test
-    void authenticateEmployeeShouldAcceptWhenTokenEmployeeMatchesPathEmployee() {
-        String token = createToken("{\"employeeId\":\"employee-1\"}");
+    void getAuthenticatedEmployeeIdShouldThrowWhenJwtIsExpired() {
+        String token = createToken("employee-1", true, SECRET);
 
-        assertDoesNotThrow(() -> jwtAuthenticationService.authenticateEmployee("Bearer " + token, "employee-1"));
+        AuthenticationException exception = assertThrows(
+                AuthenticationException.class,
+                () -> jwtAuthenticationService.getAuthenticatedEmployeeId("Bearer " + token)
+        );
+
+        assertEquals("INVALID_TOKEN", exception.getCode());
+    }
+
+    @Test
+    void getAuthenticatedEmployeeIdShouldAcceptValidSignedJwt() {
+        String token = createToken("employee-1", false, SECRET);
+
+        assertDoesNotThrow(() -> jwtAuthenticationService.getAuthenticatedEmployeeId("Bearer " + token));
     }
 
     @Test
     void getAuthenticatedEmployeeIdShouldReturnEmployeeIdFromToken() {
-        String token = createToken("{\"employeeId\":\"employee-1\"}");
+        String token = createToken("employee-1", false, SECRET);
 
         String employeeId = jwtAuthenticationService.getAuthenticatedEmployeeId("Bearer " + token);
 
@@ -74,7 +102,7 @@ class JwtAuthenticationServiceTest {
 
     @Test
     void getAuthenticatedEmployeeIdShouldThrowWhenEmployeeIdIsMissing() {
-        String token = createToken("{\"sub\":\"employee-1\"}");
+        String token = createTokenWithoutEmployeeId();
 
         AuthenticationException exception = assertThrows(
                 AuthenticationException.class,
@@ -85,37 +113,30 @@ class JwtAuthenticationServiceTest {
         assertEquals("JWT does not contain employeeId", exception.getMessage());
     }
 
-    @Test
-    void authenticateEmployeeShouldThrowWhenTokenEmployeeDoesNotMatchPathEmployee() {
-        String token = createToken("{\"employeeId\":\"employee-1\"}");
+    private String createToken(String employeeId, boolean expired, String secret) {
+        Instant now = Instant.now();
+        Instant expiration = expired ? now.minusSeconds(60) : now.plusSeconds(3600);
 
-        AuthenticationException exception = assertThrows(
-                AuthenticationException.class,
-                () -> jwtAuthenticationService.authenticateEmployee("Bearer " + token, "employee-2")
-        );
-
-        assertEquals("TOKEN_EMPLOYEE_MISMATCH", exception.getCode());
+        return Jwts.builder()
+                .claim("employeeId", employeeId)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiration))
+                .signWith(createSecretKey(secret))
+                .compact();
     }
 
-    @Test
-    void authenticateEmployeeShouldThrowWhenTokenDoesNotContainEmployeeIdentifier() {
-        String token = createToken("{\"name\":\"Laura\"}");
+    private String createTokenWithoutEmployeeId() {
+        Instant now = Instant.now();
 
-        AuthenticationException exception = assertThrows(
-                AuthenticationException.class,
-                () -> jwtAuthenticationService.authenticateEmployee("Bearer " + token, "employee-1")
-        );
-
-        assertEquals("INVALID_TOKEN", exception.getCode());
+        return Jwts.builder()
+                .subject("employee-1")
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusSeconds(3600)))
+                .signWith(createSecretKey(SECRET))
+                .compact();
     }
 
-    private String createToken(String payload) {
-        return encode("{\"alg\":\"none\"}") + "." + encode(payload) + "." + encode("signature");
-    }
-
-    private String encode(String value) {
-        return Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(value.getBytes(StandardCharsets.UTF_8));
+    private SecretKey createSecretKey(String secret) {
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 }

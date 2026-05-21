@@ -29,7 +29,9 @@ public class WorkoutService implements IWorkoutService {
 
 
     @Override
-    public List<ActivityResponse> searchAllActivities() {
+    public List<ActivityResponse> searchAllActivities(String authenticatedEmployeeId) {
+        validateEmployeeExists(authenticatedEmployeeId);
+
         logger.info("Searching all activities");
         return activityRepository.findAll().stream()
                 .map(this::toActivityResponse)
@@ -40,9 +42,7 @@ public class WorkoutService implements IWorkoutService {
     @Override
     public ActivityResponse createActivity(String employeeId, ActivityRequest payload) {
 
-        if (!employeeRepository.existsById(employeeId)) {
-            throw new EmployeeNotFoundException(employeeId);
-        }
+        validateEmployeeExists(employeeId);
 
         logger.info("Saving activity for employee id: {}", employeeId);
 
@@ -60,9 +60,7 @@ public class WorkoutService implements IWorkoutService {
     @Override
     public List<ActivityResponse> searchActivityByEmployeeId(String employeeId) {
         logger.info("Searching activities by employee id: {}", employeeId);
-        if (!employeeRepository.existsById(employeeId)) {
-            throw new EmployeeNotFoundException(employeeId);
-        }
+        validateEmployeeExists(employeeId);
 
         List<Envelope<Activity>> activities = activityRepository.findByEmployeeId(employeeId);
 
@@ -73,11 +71,19 @@ public class WorkoutService implements IWorkoutService {
     }
 
     @Override
-    public ActivityResponse searchActivityById(String id) {
+    public ActivityResponse searchActivityById(String id, String authenticatedEmployeeId) {
+        validateEmployeeExists(authenticatedEmployeeId);
+
         logger.info("Searching activity by id: {}", id);
         return activityRepository.findById(id)
                 .map(this::toActivityResponse)
                 .orElseThrow(() -> new ActivityNotFoundException(id));
+    }
+
+    private void validateEmployeeExists(String employeeId) {
+        if (!employeeRepository.existsById(employeeId)) {
+            throw new EmployeeNotFoundException(employeeId);
+        }
     }
 
     private ActivityResponse toActivityResponse(Envelope<Activity> envelope) {
