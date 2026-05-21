@@ -2,14 +2,14 @@
 
 API Java Spring Boot para registrar e consultar atividades de treino.
 
-A aplicacao usa MongoDB para salvar as atividades e JWT para identificar o employee autenticado. Nas rotas de usuario autenticado, o `employeeId` vem da claim `employeeId` dentro do token JWT.
+A aplicacao usa MongoDB para salvar atividades e Spring Security com JWT para autenticar employees. O `employeeId` usado nas rotas protegidas vem do token JWT validado, nao do body da requisicao.
 
 ## Requisitos
 
 - Java 17
-- Maven Wrapper, ja incluido no projeto
+- Maven Wrapper incluido no projeto
 - MongoDB local ou MongoDB Atlas
-- Um JWT valido contendo a claim `employeeId`
+- JWT assinado com o mesmo secret configurado na API
 
 ## Configuracao
 
@@ -33,35 +33,26 @@ Variaveis obrigatorias:
 | `MONGO_URI` | URI de conexao do MongoDB |
 | `MONGODB_ACTIVITY_COLLECTION` | Nome da collection de atividades |
 | `MONGODB_EMPLOYEES_COLLECTION` | Nome da collection de employees |
-| `JWT_SECRET` | Secret usado pelo servico de autenticacao |
+| `JWT_SECRET` | Secret usado para validar a assinatura do JWT |
 
-Exemplo para executar localmente no PowerShell:
+Exemplo no PowerShell:
 
 ```powershell
 $env:MONGO_URI="mongodb://localhost:27017/workoutApplication"
 $env:MONGODB_ACTIVITY_COLLECTION="activityCollection"
 $env:MONGODB_EMPLOYEES_COLLECTION="employessCollection"
-$env:JWT_SECRET="local-dev-secret"
-```
-
-Exemplo para Linux/macOS:
-
-```bash
-export MONGO_URI="mongodb://localhost:27017/workoutApplication"
-export MONGODB_ACTIVITY_COLLECTION="activityCollection"
-export MONGODB_EMPLOYEES_COLLECTION="employessCollection"
-export JWT_SECRET="local-dev-secret"
+$env:JWT_SECRET="local-dev-secret-with-at-least-32-chars"
 ```
 
 ## Como Executar
 
-No Windows:
+Windows:
 
 ```powershell
 .\mvnw.cmd spring-boot:run
 ```
 
-No Linux/macOS:
+Linux/macOS:
 
 ```bash
 ./mvnw spring-boot:run
@@ -73,13 +64,13 @@ A API ficara disponivel em:
 http://localhost:8080
 ```
 
-Para verificar se a aplicacao subiu:
+Health check publico:
 
 ```http
-GET http://localhost:8080/v1/activities/healthCheck
+GET http://localhost:8080/api/v1/activities/healthCheck
 ```
 
-Resposta esperada:
+Resposta:
 
 ```text
 running
@@ -87,29 +78,37 @@ running
 
 ## Autenticacao
 
-As rotas protegidas precisam receber o header:
+Todas as rotas, exceto o health check, exigem:
 
 ```http
-Authorization: Bearer <seu-token-jwt>
+Authorization: Bearer <jwt>
 ```
 
-O token precisa conter a claim `employeeId`:
+O token precisa:
+
+- estar assinado com `security.jwt.secret`
+- nao estar expirado
+- conter `employeeId`
+- conter `authorizationType` com valor `EMPLOYEE`
+
+Payload esperado:
 
 ```json
 {
-  "employeeId": "6a0dc4717b55af25df34b38c"
+  "employeeId": "6a0dc4717b55af25df34b38c",
+  "authorizationType": "EMPLOYEE"
 }
 ```
 
-O token tambem precisa estar assinado com o mesmo `security.jwt.secret` configurado na aplicacao e nao pode estar expirado.
+Depois que o filtro valida o token, o controller recebe o employee autenticado via `@AuthenticationPrincipal`.
 
-## Exemplos de Uso
+## Rotas
 
 ### Criar atividade
 
 ```http
-POST http://localhost:8080/v1/activities
-Authorization: Bearer <seu-token-jwt>
+POST http://localhost:8080/api/v1/activities
+Authorization: Bearer <jwt>
 Content-Type: application/json
 ```
 
@@ -122,126 +121,74 @@ Body:
 }
 ```
 
-Resposta esperada:
-
-```json
-{
-  "id": "activity-id",
-  "employeeId": "6a0dc4717b55af25df34b38c",
-  "activityDateTime": "2026-05-20T21:40:00",
-  "activityCode": "RUN",
-  "activityDescription": "Corrida de 5km"
-}
-```
-
-Exemplo com `curl`:
+Exemplo:
 
 ```bash
-curl -X POST "http://localhost:8080/v1/activities" \
-  -H "Authorization: Bearer <seu-token-jwt>" \
+curl -X POST "http://localhost:8080/api/v1/activities" \
+  -H "Authorization: Bearer <jwt>" \
   -H "Content-Type: application/json" \
   -d '{"activityCode":"RUN","activityDescription":"Corrida de 5km"}'
 ```
 
-### Listar atividades do employee autenticado
+### Listar minhas atividades
 
 ```http
-GET http://localhost:8080/v1/activities/me
-Authorization: Bearer <seu-token-jwt>
+GET http://localhost:8080/api/v1/activities/me
+Authorization: Bearer <jwt>
 ```
 
-Resposta esperada:
+### Listar atividades por employee
 
-```json
-[
-  {
-    "id": "activity-id",
-    "employeeId": "6a0dc4717b55af25df34b38c",
-    "activityDateTime": "2026-05-20T21:40:00",
-    "activityCode": "RUN",
-    "activityDescription": "Corrida de 5km"
-  }
-]
-```
-
-Exemplo com `curl`:
-
-```bash
-curl "http://localhost:8080/v1/activities/me" \
-  -H "Authorization: Bearer <seu-token-jwt>"
-```
-
-### Listar atividades de um employee pelo path
-
-Essa rota compara o `employeeId` do path com o `employeeId` validado do JWT.
+Compara o `employeeId` do path com o `employeeId` do token.
 
 ```http
-GET http://localhost:8080/v1/activities/employees/{employeeId}
-Authorization: Bearer <seu-token-jwt>
+GET http://localhost:8080/api/v1/activities/employees/{employeeId}
+Authorization: Bearer <jwt>
 ```
 
-Exemplo com `curl`:
-
-```bash
-curl "http://localhost:8080/v1/activities/employees/6a0dc4717b55af25df34b38c" \
-  -H "Authorization: Bearer <seu-token-jwt>"
-```
-
-Se o id do path for diferente do id do token, a API retorna `TOKEN_EMPLOYEE_MISMATCH`.
+Se forem diferentes, retorna `TOKEN_EMPLOYEE_MISMATCH`.
 
 ### Listar todas as atividades
 
 ```http
-GET http://localhost:8080/v1/activities
-Authorization: Bearer <seu-token-jwt>
+GET http://localhost:8080/api/v1/activities
+Authorization: Bearer <jwt>
 ```
 
-Exemplo com `curl`:
-
-```bash
-curl "http://localhost:8080/v1/activities" \
-  -H "Authorization: Bearer <seu-token-jwt>"
-```
+Mesmo nessa rota, o service verifica se o employee do token existe no banco.
 
 ### Buscar atividade por id
 
 ```http
-GET http://localhost:8080/v1/activities/{id}
-Authorization: Bearer <seu-token-jwt>
+GET http://localhost:8080/api/v1/activities/{id}
+Authorization: Bearer <jwt>
 ```
 
-Exemplo:
+## Erros
 
-```bash
-curl "http://localhost:8080/v1/activities/activity-id" \
-  -H "Authorization: Bearer <seu-token-jwt>"
-```
-
-## Respostas de Erro
-
-Os erros seguem o formato padronizado:
+Formato padronizado:
 
 ```json
 {
-  "timestamp": "2026-05-20T21:40:00",
-  "status": 404,
-  "error": "Not Found",
-  "code": "EMPLOYEE_NOT_FOUND",
-  "message": "Employee not found with id: 6a0dc4717b55af25df34b38c",
-  "path": "/v1/activities/me",
+  "timestamp": "2026-05-21T19:00:00",
+  "status": 401,
+  "error": "Unauthorized",
+  "code": "INVALID_TOKEN",
+  "message": "JWT is invalid",
+  "path": "/api/v1/activities",
   "fields": null
 }
 ```
 
 ## Testes
 
-No Windows:
+Windows:
 
 ```powershell
 .\mvnw.cmd test
 ```
 
-No Linux/macOS:
+Linux/macOS:
 
 ```bash
 ./mvnw test
