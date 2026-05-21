@@ -4,6 +4,7 @@ import com.devBackend.workout_api.Application.DTOs.ActivityRequest;
 import com.devBackend.workout_api.Application.DTOs.ActivityResponse;
 import com.devBackend.workout_api.Domain.Entity.Activity;
 import com.devBackend.workout_api.Domain.Exception.ActivityNotFoundException;
+import com.devBackend.workout_api.Domain.Exception.AuthenticationException;
 import com.devBackend.workout_api.Domain.Exception.EmployeeNotFoundException;
 import com.devBackend.workout_api.Domain.Repository.ActivityRepository;
 import com.devBackend.workout_api.Domain.Repository.EmployeeRepository;
@@ -125,6 +126,22 @@ class WorkoutServiceTest {
         assertEquals("Activity not found with id: missing-id", exception.getMessage());
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
         assertEquals("ACTIVITY_NOT_FOUND", exception.getCode());
+    }
+
+    @Test
+    void searchActivityByIdShouldThrowWhenActivityEmployeeDoesNotMatchAuthenticatedEmployee() {
+        Envelope<Activity> envelope = createEnvelope("activity-1", "employee-2");
+        when(employeeRepository.existsById("employee-1")).thenReturn(true);
+        when(activityRepository.findById("activity-1")).thenReturn(Optional.of(envelope));
+
+        AuthenticationException exception = assertThrows(
+                AuthenticationException.class,
+                () -> workoutService.searchActivityById("activity-1", "employee-1")
+        );
+
+        assertEquals("JWT employee does not match activity employee", exception.getMessage());
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus());
+        assertEquals("TOKEN_EMPLOYEE_MISMATCH", exception.getCode());
     }
 
     @Test

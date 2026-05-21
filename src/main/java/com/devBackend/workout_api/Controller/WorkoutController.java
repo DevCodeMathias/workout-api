@@ -14,7 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("api/v1/activities")
 public class WorkoutController {
-    private static final Logger logger = LoggerFactory.getLogger(WorkoutController.class);
+
 
     private final IWorkoutService workoutService;
 
@@ -24,7 +24,6 @@ public class WorkoutController {
 
     @GetMapping("/healthCheck")
     public String healthCheck() {
-        logger.info("Health check requested");
         return "running";
     }
 
@@ -32,7 +31,6 @@ public class WorkoutController {
     public List<ActivityResponse> searchAuthenticatedEmployeeActivities(
             @AuthenticationPrincipal String employeeId
     ) {
-        logger.info("Request received to search activities by employee id: {}", employeeId);
         return workoutService.searchActivityByEmployeeId(employeeId);
     }
 
@@ -41,14 +39,7 @@ public class WorkoutController {
             @PathVariable String employeeId,
             @AuthenticationPrincipal String authenticatedEmployeeId
     ) {
-        if (!employeeId.equals(authenticatedEmployeeId)) {
-            throw new AuthenticationException(
-                    "TOKEN_EMPLOYEE_MISMATCH",
-                    "JWT employee does not match requested employee"
-            );
-        }
 
-        logger.info("Request received to search activities by employee id: {}", employeeId);
         return workoutService.searchActivityByEmployeeId(employeeId);
     }
 
@@ -56,7 +47,6 @@ public class WorkoutController {
     public List<ActivityResponse> searchAllActivities(
             @AuthenticationPrincipal String employeeId
     ) {
-        logger.info("Request received to search all activities");
         return workoutService.searchAllActivities(employeeId);
     }
 
@@ -65,7 +55,6 @@ public class WorkoutController {
             @PathVariable String id,
             @AuthenticationPrincipal String employeeId
     ) {
-        logger.info("Request received to search activity by id: {}", id);
         return workoutService.searchActivityById(id, employeeId);
     }
 
@@ -74,7 +63,6 @@ public class WorkoutController {
             @RequestBody ActivityRequest payload,
             @AuthenticationPrincipal String employeeId
     ) {
-        logger.info("Request received to create activity for employee id: {}", employeeId);
         return workoutService.createActivity(employeeId, payload);
     }
 }

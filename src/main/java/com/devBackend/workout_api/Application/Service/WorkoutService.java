@@ -5,6 +5,7 @@ import com.devBackend.workout_api.Application.DTOs.ActivityResponse;
 import com.devBackend.workout_api.Application.Interface.IWorkoutService;
 import com.devBackend.workout_api.Domain.Entity.Activity;
 import com.devBackend.workout_api.Domain.Exception.ActivityNotFoundException;
+import com.devBackend.workout_api.Domain.Exception.AuthenticationException;
 import com.devBackend.workout_api.Domain.Exception.EmployeeNotFoundException;
 import com.devBackend.workout_api.Domain.Repository.ActivityRepository;
 import com.devBackend.workout_api.Domain.Repository.EmployeeRepository;
@@ -75,14 +76,28 @@ public class WorkoutService implements IWorkoutService {
         validateEmployeeExists(authenticatedEmployeeId);
 
         logger.info("Searching activity by id: {}", id);
-        return activityRepository.findById(id)
-                .map(this::toActivityResponse)
+        Envelope<Activity> activity = activityRepository.findById(id)
                 .orElseThrow(() -> new ActivityNotFoundException(id));
+
+        validateActivityBelongsToEmployee(activity, authenticatedEmployeeId);
+
+        return toActivityResponse(activity);
     }
 
     private void validateEmployeeExists(String employeeId) {
         if (!employeeRepository.existsById(employeeId)) {
             throw new EmployeeNotFoundException(employeeId);
+        }
+    }
+
+    private void validateActivityBelongsToEmployee(Envelope<Activity> activity, String authenticatedEmployeeId) {
+        String activityEmployeeId = activity.getBody().getEmployeeId();
+
+        if (!authenticatedEmployeeId.equals(activityEmployeeId)) {
+            throw new AuthenticationException(
+                    "TOKEN_EMPLOYEE_MISMATCH",
+                    "JWT employee does not match activity employee"
+            );
         }
     }
 
