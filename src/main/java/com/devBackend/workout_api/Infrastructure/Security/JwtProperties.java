@@ -20,4 +20,8 @@ public class JwtProperties {
     public void setExpirationHours(long expirationHours) {
         this.expirationHours = expirationHours;
     }
+
+    public long getExpirationHours() {
+        return expirationHours;
+    }
 }

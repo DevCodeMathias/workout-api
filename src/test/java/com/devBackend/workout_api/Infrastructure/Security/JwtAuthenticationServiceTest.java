@@ -85,6 +85,19 @@ class JwtAuthenticationServiceTest {
     }
 
     @Test
+    void getAuthenticatedEmployeeIdShouldThrowWhenAuthorizationTypeIsInvalid() {
+        String token = createTokenWithAuthorizationType("employee-1", "ADMIN", false, SECRET);
+
+        AuthenticationException exception = assertThrows(
+                AuthenticationException.class,
+                () -> jwtAuthenticationService.getAuthenticatedEmployeeId("Bearer " + token)
+        );
+
+        assertEquals("INVALID_TOKEN", exception.getCode());
+        assertEquals("JWT authorization type is invalid", exception.getMessage());
+    }
+
+    @Test
     void getAuthenticatedEmployeeIdShouldAcceptValidSignedJwt() {
         String token = createToken("employee-1", false, SECRET);
 
@@ -114,11 +127,21 @@ class JwtAuthenticationServiceTest {
     }
 
     private String createToken(String employeeId, boolean expired, String secret) {
+        return createTokenWithAuthorizationType(employeeId, "EMPLOYEE", expired, secret);
+    }
+
+    private String createTokenWithAuthorizationType(
+            String employeeId,
+            String authorizationType,
+            boolean expired,
+            String secret
+    ) {
         Instant now = Instant.now();
         Instant expiration = expired ? now.minusSeconds(60) : now.plusSeconds(3600);
 
         return Jwts.builder()
                 .claim("employeeId", employeeId)
+                .claim("authorizationType", authorizationType)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiration))
                 .signWith(createSecretKey(secret))
@@ -130,6 +153,7 @@ class JwtAuthenticationServiceTest {
 
         return Jwts.builder()
                 .subject("employee-1")
+                .claim("authorizationType", "EMPLOYEE")
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(3600)))
                 .signWith(createSecretKey(SECRET))
