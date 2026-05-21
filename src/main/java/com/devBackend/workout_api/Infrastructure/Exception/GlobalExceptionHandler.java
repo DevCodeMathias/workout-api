@@ -11,6 +11,8 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -89,6 +91,20 @@ public class GlobalExceptionHandler {
                 HttpStatus.METHOD_NOT_ALLOWED,
                 "METHOD_NOT_ALLOWED",
                 "Request method is not supported for this endpoint",
+                request.getRequestURI(),
+                null
+        );
+    }
+
+    @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class})
+    public ResponseEntity<ErrorResponse> handleRouteNotFoundException(
+            Exception exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.NOT_FOUND,
+                "ROUTE_NOT_FOUND",
+                "Route not found",
                 request.getRequestURI(),
                 null
         );
