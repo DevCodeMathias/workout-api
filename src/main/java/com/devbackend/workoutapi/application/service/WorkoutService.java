@@ -8,7 +8,6 @@ import com.devbackend.workoutapi.domain.exception.ActivityNotFoundException;
 import com.devbackend.workoutapi.domain.exception.EmployeeNotFoundException;
 import com.devbackend.workoutapi.domain.repository.ActivityRepository;
 import com.devbackend.workoutapi.domain.repository.EmployeeRepository;
-import com.devbackend.workoutapi.infrastructure.model.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -53,7 +52,7 @@ public class WorkoutService implements WorkoutUseCase {
                 payload.activityDescription()
         );
 
-        Envelope<Activity> savedActivity = activityRepository.save(activity);
+        Activity savedActivity = activityRepository.save(activity);
         return toActivityResponse(savedActivity);
     }
 
@@ -62,7 +61,7 @@ public class WorkoutService implements WorkoutUseCase {
         logger.info("Searching activities by employee id: {}", employeeId);
         validateEmployeeExists(employeeId);
 
-        List<Envelope<Activity>> activities = activityRepository.findByEmployeeId(employeeId);
+        List<Activity> activities = activityRepository.findByEmployeeId(employeeId);
 
         return activities.stream()
                 .map(this::toActivityResponse)
@@ -86,11 +85,9 @@ public class WorkoutService implements WorkoutUseCase {
         }
     }
 
-    private ActivityResponse toActivityResponse(Envelope<Activity> envelope) {
-        Activity activity = envelope.getBody();
-
+    private ActivityResponse toActivityResponse(Activity activity) {
         return new ActivityResponse(
-                envelope.getId(),
+                activity.getId(),
                 activity.getEmployeeId(),
                 activity.getActivityDateTime(),
                 activity.getActivityCode(),

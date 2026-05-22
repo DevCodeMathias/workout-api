@@ -7,7 +7,6 @@ import com.devbackend.workoutapi.domain.exception.ActivityNotFoundException;
 import com.devbackend.workoutapi.domain.exception.EmployeeNotFoundException;
 import com.devbackend.workoutapi.domain.repository.ActivityRepository;
 import com.devbackend.workoutapi.domain.repository.EmployeeRepository;
-import com.devbackend.workoutapi.infrastructure.model.Envelope;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,20 +47,15 @@ class WorkoutServiceTest {
         ActivityRequest request = new ActivityRequest("BICEPS", "Biceps workout");
 
         Activity savedActivity = new Activity(
+                "activity-1",
                 "employee-1",
                 LocalDateTime.of(2026, 5, 19, 10, 0),
                 "BICEPS",
                 "Biceps workout"
         );
-        Envelope<Activity> savedEnvelope = new Envelope<>(
-                "activity-1",
-                LocalDateTime.of(2026, 5, 19, 10, 1),
-                LocalDateTime.of(2026, 5, 19, 10, 1),
-                savedActivity
-        );
 
         when(employeeRepository.existsById("employee-1")).thenReturn(true);
-        when(activityRepository.save(any(Activity.class))).thenReturn(savedEnvelope);
+        when(activityRepository.save(any(Activity.class))).thenReturn(savedActivity);
 
         ActivityResponse response = workoutService.createActivity("employee-1", request);
 
@@ -83,9 +77,9 @@ class WorkoutServiceTest {
 
     @Test
     void searchActivityByIdShouldReturnResponseWhenActivityExists() {
-        Envelope<Activity> envelope = createEnvelope("activity-1", "employee-1");
+        Activity activity = createActivity("activity-1", "employee-1");
         when(employeeRepository.existsById("employee-1")).thenReturn(true);
-        when(activityRepository.findById("activity-1")).thenReturn(Optional.of(envelope));
+        when(activityRepository.findById("activity-1")).thenReturn(Optional.of(activity));
 
         ActivityResponse response = workoutService.searchActivityById("activity-1", "employee-1");
 
@@ -99,8 +93,8 @@ class WorkoutServiceTest {
     void searchAllActivitiesShouldReturnResponses() {
         when(employeeRepository.existsById("employee-1")).thenReturn(true);
         when(activityRepository.findAll()).thenReturn(List.of(
-                createEnvelope("activity-1", "employee-1"),
-                createEnvelope("activity-2", "employee-2")
+                createActivity("activity-1", "employee-1"),
+                createActivity("activity-2", "employee-2")
         ));
 
         List<ActivityResponse> response = workoutService.searchAllActivities("employee-1");
@@ -131,8 +125,8 @@ class WorkoutServiceTest {
     void searchActivityByEmployeeIdShouldReturnResponses() {
         when(employeeRepository.existsById("employee-1")).thenReturn(true);
         when(activityRepository.findByEmployeeId("employee-1")).thenReturn(List.of(
-                createEnvelope("activity-1", "employee-1"),
-                createEnvelope("activity-2", "employee-1")
+                createActivity("activity-1", "employee-1"),
+                createActivity("activity-2", "employee-1")
         ));
 
         List<ActivityResponse> response = workoutService.searchActivityByEmployeeId("employee-1");
@@ -204,19 +198,13 @@ class WorkoutServiceTest {
         verify(activityRepository, never()).save(any(Activity.class));
     }
 
-    private Envelope<Activity> createEnvelope(String activityId, String employeeId) {
-        Activity activity = new Activity(
+    private Activity createActivity(String activityId, String employeeId) {
+        return new Activity(
+                activityId,
                 employeeId,
                 LocalDateTime.of(2026, 5, 19, 10, 0),
                 "BICEPS",
                 "Biceps workout"
-        );
-
-        return new Envelope<>(
-                activityId,
-                LocalDateTime.of(2026, 5, 19, 10, 1),
-                LocalDateTime.of(2026, 5, 19, 10, 2),
-                activity
         );
     }
 }
