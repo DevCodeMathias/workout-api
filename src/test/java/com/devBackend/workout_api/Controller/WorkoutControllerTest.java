@@ -3,7 +3,6 @@ package com.devBackend.workout_api.Controller;
 import com.devBackend.workout_api.Application.DTOs.ActivityRequest;
 import com.devBackend.workout_api.Application.DTOs.ActivityResponse;
 import com.devBackend.workout_api.Application.Interface.IWorkoutService;
-import com.devBackend.workout_api.Domain.Exception.AuthenticationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,7 +13,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -65,13 +63,17 @@ class WorkoutControllerTest {
     }
 
     @Test
-    void searchEmployeeActivitiesShouldThrowWhenPathEmployeeDoesNotMatchTokenEmployee() {
-        AuthenticationException exception = assertThrows(
-                AuthenticationException.class,
-                () -> workoutController.searchEmployeeActivities("employee-2", "employee-1")
+    void searchEmployeeActivitiesShouldUsePathEmployeeId() {
+        List<ActivityResponse> expectedResponse = List.of(createActivityResponse("activity-1", "employee-2"));
+        when(workoutService.searchActivityByEmployeeId("employee-2")).thenReturn(expectedResponse);
+
+        List<ActivityResponse> response = workoutController.searchEmployeeActivities(
+                "employee-2",
+                "employee-1"
         );
 
-        assertEquals("TOKEN_EMPLOYEE_MISMATCH", exception.getCode());
+        assertEquals(expectedResponse, response);
+        verify(workoutService).searchActivityByEmployeeId("employee-2");
     }
 
     @Test
