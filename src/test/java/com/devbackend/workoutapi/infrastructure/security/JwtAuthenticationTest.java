@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class JwtAuthenticationServiceTest {
+class JwtAuthenticationTest {
     private static final String SECRET = "test-secret-key-with-at-least-32-characters";
     private static final String OTHER_SECRET = "other-secret-key-with-at-least-32-characters";
 
