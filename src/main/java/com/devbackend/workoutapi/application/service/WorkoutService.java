@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class WorkoutService implements WorkoutUseCase {
@@ -75,6 +76,7 @@ public class WorkoutService implements WorkoutUseCase {
 
         logger.info("Searching activity by id: {}", id);
         return activityRepository.findById(id)
+                .filter(activity -> Objects.equals(activity.getEmployeeId(), authenticatedEmployeeId))
                 .map(this::toActivityResponse)
                 .orElseThrow(() -> new ActivityNotFoundException(id));
     }

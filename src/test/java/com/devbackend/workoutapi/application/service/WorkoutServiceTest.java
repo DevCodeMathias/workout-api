@@ -122,6 +122,22 @@ class WorkoutServiceTest {
     }
 
     @Test
+    void searchActivityByIdShouldThrowWhenActivityBelongsToAnotherEmployee() {
+        Activity activity = createActivity("activity-1", "employee-2");
+        when(employeeRepository.existsById("employee-1")).thenReturn(true);
+        when(activityRepository.findById("activity-1")).thenReturn(Optional.of(activity));
+
+        ActivityNotFoundException exception = assertThrows(
+                ActivityNotFoundException.class,
+                () -> workoutService.searchActivityById("activity-1", "employee-1")
+        );
+
+        assertEquals("Activity not found with id: activity-1", exception.getMessage());
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+        assertEquals("ACTIVITY_NOT_FOUND", exception.getCode());
+    }
+
+    @Test
     void searchActivityByEmployeeIdShouldReturnResponses() {
         when(employeeRepository.existsById("employee-1")).thenReturn(true);
         when(activityRepository.findByEmployeeId("employee-1")).thenReturn(List.of(
