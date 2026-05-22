@@ -23,7 +23,7 @@ public class MongoActivityRepository implements ActivityRepository {
     @Override
     public Activity save(Activity activity) {
         logger.debug("Saving activity document for employee id: {}", activity.getEmployeeId());
-        Envelope<Activity> savedActivity = mongoRepository.save(Envelope.of(activity));
+        Envelope savedActivity = mongoRepository.save(Envelope.of(activity));
         logger.debug("Activity document saved id={}", savedActivity.getId());
         return toActivity(savedActivity);
     }
@@ -31,7 +31,7 @@ public class MongoActivityRepository implements ActivityRepository {
     @Override
     public Optional<Activity> findById(String id) {
         logger.debug("Finding activity document by id: {}", id);
-        Optional<Envelope<Activity>> activity = mongoRepository.findById(id);
+        Optional<Envelope> activity = mongoRepository.findById(id);
         logger.debug("Activity document lookup result id={} found={}", id, activity.isPresent());
         return activity.map(this::toActivity);
     }
@@ -39,7 +39,7 @@ public class MongoActivityRepository implements ActivityRepository {
     @Override
     public List<Activity> findByEmployeeId(String employeeId) {
         logger.debug("Finding activity documents by employee id: {}", employeeId);
-        List<Envelope<Activity>> activities = mongoRepository.findByEmployeeId(employeeId);
+        List<Envelope> activities = mongoRepository.findByEmployeeId(employeeId);
         logger.debug("Activity documents found employeeId={} count={}", employeeId, activities.size());
         return activities.stream()
                 .map(this::toActivity)
@@ -49,14 +49,14 @@ public class MongoActivityRepository implements ActivityRepository {
     @Override
     public List<Activity> findAll() {
         logger.debug("Finding all activity documents");
-        List<Envelope<Activity>> activities = mongoRepository.findAll();
+        List<Envelope> activities = mongoRepository.findAll();
         logger.debug("All activity documents found count={}", activities.size());
         return activities.stream()
                 .map(this::toActivity)
                 .toList();
     }
 
-    private Activity toActivity(Envelope<Activity> envelope) {
+    private Activity toActivity(Envelope envelope) {
         Activity activity = envelope.getBody();
         activity.setId(envelope.getId());
         return activity;
