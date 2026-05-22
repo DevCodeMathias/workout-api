@@ -3,9 +3,6 @@ package com.devBackend.workout_api.Controller;
 import com.devBackend.workout_api.Application.DTOs.ActivityRequest;
 import com.devBackend.workout_api.Application.DTOs.ActivityResponse;
 import com.devBackend.workout_api.Application.Interface.IWorkoutService;
-import com.devBackend.workout_api.Domain.Exception.AuthenticationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,15 +28,6 @@ public class WorkoutController {
     public List<ActivityResponse> searchAuthenticatedEmployeeActivities(
             @AuthenticationPrincipal String employeeId
     ) {
-        return workoutService.searchActivityByEmployeeId(employeeId);
-    }
-
-    @GetMapping("/employees/{employeeId}")
-    public List<ActivityResponse> searchEmployeeActivities(
-            @PathVariable String employeeId,
-            @AuthenticationPrincipal String authenticatedEmployeeId
-    ) {
-
         return workoutService.searchActivityByEmployeeId(employeeId);
     }
 

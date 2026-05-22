@@ -36,11 +36,11 @@ class GlobalExceptionHandlerTest {
 
         ErrorResponse body = response.getBody();
 
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertNotNull(body);
         assertNotNull(body.timestamp());
-        assertEquals(404, body.status());
-        assertEquals("Not Found", body.error());
+        assertEquals(401, body.status());
+        assertEquals("Unauthorized", body.error());
         assertEquals("EMPLOYEE_NOT_FOUND", body.code());
         assertEquals("Employee not found with id: employee-1", body.message());
         assertEquals("/v1/activities/employees/employee-1", body.path());

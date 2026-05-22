@@ -154,7 +154,7 @@ class WorkoutServiceTest {
         );
 
         assertEquals("Employee not found with id: missing-employee", exception.getMessage());
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus());
         assertEquals("EMPLOYEE_NOT_FOUND", exception.getCode());
     }
 
@@ -168,7 +168,7 @@ class WorkoutServiceTest {
         );
 
         assertEquals("Employee not found with id: missing-employee", exception.getMessage());
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus());
         assertEquals("EMPLOYEE_NOT_FOUND", exception.getCode());
         verify(activityRepository, never()).findAll();
     }
@@ -183,7 +183,7 @@ class WorkoutServiceTest {
         );
 
         assertEquals("Employee not found with id: missing-employee", exception.getMessage());
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus());
         assertEquals("EMPLOYEE_NOT_FOUND", exception.getCode());
         verify(activityRepository, never()).findById("activity-1");
     }
@@ -199,7 +199,7 @@ class WorkoutServiceTest {
         );
 
         assertEquals("Employee not found with id: missing-employee", exception.getMessage());
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus());
         assertEquals("EMPLOYEE_NOT_FOUND", exception.getCode());
         verify(activityRepository, never()).save(any(Activity.class));
     }

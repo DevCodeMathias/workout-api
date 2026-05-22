@@ -49,34 +49,6 @@ class WorkoutControllerTest {
     }
 
     @Test
-    void searchEmployeeActivitiesShouldReturnActivitiesWhenPathEmployeeMatchesTokenEmployee() {
-        List<ActivityResponse> expectedResponse = List.of(createActivityResponse("activity-1", "employee-1"));
-        when(workoutService.searchActivityByEmployeeId("employee-1")).thenReturn(expectedResponse);
-
-        List<ActivityResponse> response = workoutController.searchEmployeeActivities(
-                "employee-1",
-                "employee-1"
-        );
-
-        assertEquals(expectedResponse, response);
-        verify(workoutService).searchActivityByEmployeeId("employee-1");
-    }
-
-    @Test
-    void searchEmployeeActivitiesShouldUsePathEmployeeId() {
-        List<ActivityResponse> expectedResponse = List.of(createActivityResponse("activity-1", "employee-2"));
-        when(workoutService.searchActivityByEmployeeId("employee-2")).thenReturn(expectedResponse);
-
-        List<ActivityResponse> response = workoutController.searchEmployeeActivities(
-                "employee-2",
-                "employee-1"
-        );
-
-        assertEquals(expectedResponse, response);
-        verify(workoutService).searchActivityByEmployeeId("employee-2");
-    }
-
-    @Test
     void searchAllActivitiesShouldPassAuthenticatedEmployeeToServiceAndReturnActivities() {
         List<ActivityResponse> expectedResponse = List.of(
                 createActivityResponse("activity-1", "employee-1"),
