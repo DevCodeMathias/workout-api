@@ -2,7 +2,7 @@ package com.devbackend.workoutapi.controller;
 
 import com.devbackend.workoutapi.application.dto.ActivityRequest;
 import com.devbackend.workoutapi.application.dto.ActivityResponse;
-import com.devbackend.workoutapi.application.port.WorkoutUseCase;
+import com.devbackend.workoutapi.application.interfaces.WorkoutUseCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

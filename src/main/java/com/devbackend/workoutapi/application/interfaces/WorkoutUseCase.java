@@ -1,4 +1,4 @@
-package com.devbackend.workoutapi.application.port;
+package com.devbackend.workoutapi.application.interfaces;
 
 import com.devbackend.workoutapi.application.dto.ActivityRequest;
 import com.devbackend.workoutapi.application.dto.ActivityResponse;

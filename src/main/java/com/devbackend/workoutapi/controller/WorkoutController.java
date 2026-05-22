@@ -2,7 +2,8 @@ package com.devbackend.workoutapi.controller;
 
 import com.devbackend.workoutapi.application.dto.ActivityRequest;
 import com.devbackend.workoutapi.application.dto.ActivityResponse;
-import com.devbackend.workoutapi.application.port.WorkoutUseCase;
+import com.devbackend.workoutapi.application.interfaces.WorkoutUseCase;
+import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,7 +49,7 @@ public class WorkoutController {
 
     @PostMapping
     public ActivityResponse createActivity(
-            @RequestBody ActivityRequest payload,
+            @Valid @RequestBody ActivityRequest payload,
             @AuthenticationPrincipal String employeeId
     ) {
         return workoutService.createActivity(employeeId, payload);

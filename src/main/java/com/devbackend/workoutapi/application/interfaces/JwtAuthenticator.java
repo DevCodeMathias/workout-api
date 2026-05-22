@@ -1,4 +1,4 @@
-package com.devbackend.workoutapi.application.port;
+package com.devbackend.workoutapi.application.interfaces;
 
 public interface JwtAuthenticator {
     String getAuthenticatedEmployeeId(String authorizationHeader);

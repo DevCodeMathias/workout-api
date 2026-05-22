@@ -2,7 +2,7 @@ package com.devbackend.workoutapi.application.service;
 
 import com.devbackend.workoutapi.application.dto.ActivityRequest;
 import com.devbackend.workoutapi.application.dto.ActivityResponse;
-import com.devbackend.workoutapi.application.port.WorkoutUseCase;
+import com.devbackend.workoutapi.application.interfaces.WorkoutUseCase;
 import com.devbackend.workoutapi.domain.entity.Activity;
 import com.devbackend.workoutapi.domain.exception.ActivityNotFoundException;
 import com.devbackend.workoutapi.domain.exception.EmployeeNotFoundException;

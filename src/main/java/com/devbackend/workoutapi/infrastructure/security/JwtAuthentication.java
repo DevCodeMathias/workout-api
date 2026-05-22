@@ -1,6 +1,6 @@
 package com.devbackend.workoutapi.infrastructure.security;
 
-import com.devbackend.workoutapi.application.port.JwtAuthenticator;
+import com.devbackend.workoutapi.application.interfaces.JwtAuthenticator;
 import com.devbackend.workoutapi.domain.exception.AuthenticationException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
